@@ -1,0 +1,15 @@
+# Maven build output
+**/target/
+target/
+
+# Eclipse/VSCode build outputs
+bin/
+**/bin/
+.vscode/
+
+# Local maven distribution
+.maven/
+
+# OS files
+.DS_Store
+Thumbs.db
