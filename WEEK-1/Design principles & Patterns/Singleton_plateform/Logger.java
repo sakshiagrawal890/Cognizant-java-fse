@@ -5,8 +5,7 @@
  * throughout the application lifecycle for consistent logging.
  */
 public class Logger {
-
-    // Step 1: Private static instance of itself
+// Step 1: Private static instance of itself
     private static Logger instance;
 
     // Step 2: Private constructor to prevent external instantiation
@@ -29,5 +28,9 @@ public class Logger {
     // Logging method to log messages
     public void log(String message) {
         System.out.println("[LOG] " + message);
+    }
+
+    public static void setInstance(Logger instance) {
+        Logger.instance = instance;
     }
 }

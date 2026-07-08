@@ -1,38 +1,38 @@
-SET SERVEROUTPUT ON;
+CREATE TABLE Customers (
+    CustomerID       NUMBER PRIMARY KEY,
+    CustomerName     VARCHAR2(100),
+    Age              NUMBER,
+    Balance          NUMBER(10,2),
+    LoanInterestRate NUMBER(5,2),
+    IsVIP            CHAR(1) DEFAULT 'N'
+);
+CREATE TABLE Loans (
+    LoanID      NUMBER PRIMARY KEY,
+    CustomerID  NUMBER REFERENCES Customers(CustomerID),
+    DueDate     DATE
+);
+-- Sample customers
+INSERT INTO Customers VALUES (1, 'Arun', 65, 12000.00, 10.0, 'N');
+INSERT INTO Customers VALUES (2, 'Priya', 45, 8000.00, 9.5, 'N');
+INSERT INTO Customers VALUES (3, 'Kumar', 70, 5000.00, 11.0, 'N');
+INSERT INTO Customers VALUES (4, 'Sneha', 30, 15000.00, 10.5, 'N');
 
-DECLARE
-    -- Cursor to select all customers
-    CURSOR c_customers IS
-        SELECT CustomerID, Name, Balance, IsVIP
-        FROM Customers;
+-- Sample loans
+INSERT INTO Loans VALUES (101, 1, SYSDATE + 10);  -- due in 10 days
+INSERT INTO Loans VALUES (102, 2, SYSDATE + 40);  -- not within 30 days
+INSERT INTO Loans VALUES (103, 4, SYSDATE + 5);   -- due in 5 days
+
+COMMIT;
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('--- Processing VIP Status Promotion based on Balance (> $10,000) ---');
-    
-    FOR rec IN c_customers LOOP
+    FOR rec IN (SELECT CustomerID, Balance FROM Customers) LOOP
         IF rec.Balance > 10000 THEN
-            -- Only update if the flag is not already 'TRUE'
-            IF rec.IsVIP != 'TRUE' THEN
-                UPDATE Customers
-                SET IsVIP = 'TRUE'
-                WHERE CustomerID = rec.CustomerID;
-                
-                DBMS_OUTPUT.PUT_LINE('Promoted Customer: ' || rec.Name || ' (ID: ' || rec.CustomerID || 
-                                     ', Balance: $' || TO_CHAR(rec.Balance, 'FM999,999,990.00') || ') to VIP.');
-            ELSE
-                DBMS_OUTPUT.PUT_LINE('Customer: ' || rec.Name || ' (ID: ' || rec.CustomerID || 
-                                     ') is already VIP.');
-            END IF;
-        ELSE
-            DBMS_OUTPUT.PUT_LINE('Customer: ' || rec.Name || ' (ID: ' || rec.CustomerID || 
-                                 ', Balance: $' || TO_CHAR(rec.Balance, 'FM999,999,990.00') || ') does not qualify for VIP.');
+            UPDATE Customers
+            SET IsVIP = 'Y'
+            WHERE CustomerID = rec.CustomerID;
+
+            DBMS_OUTPUT.PUT_LINE('CustomerID ' || rec.CustomerID || ' promoted to VIP status.');
         END IF;
     END LOOP;
-    
+
     COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Transaction committed successfully.');
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
 END;
-/

@@ -1,42 +1,34 @@
--- Stored Procedure to process monthly interest for all savings accounts
-CREATE OR REPLACE PROCEDURE ProcessMonthlyInterest AS
-    v_updated_rows NUMBER := 0;
+CREATE TABLE SavingsAccounts (
+    AccountID   NUMBER PRIMARY KEY,
+    CustomerID  NUMBER,
+    Balance     NUMBER(10, 2)
+);
+INSERT INTO SavingsAccounts VALUES (101, 1, 5000);
+INSERT INTO SavingsAccounts VALUES (102, 2, 10000);
+INSERT INTO SavingsAccounts VALUES (103, 3, 20000);
+COMMIT;
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE PROCEDURE ProcessMonthlyInterest IS
+    new_balance NUMBER;
 BEGIN
-    -- Update all savings accounts by adding 1% interest
-    UPDATE Accounts
-    SET Balance = Balance * 1.01,
-        LastUpdate = SYSDATE
-    WHERE AccountType = 'Savings';
-    
-    v_updated_rows := SQL%ROWCOUNT;
-    
+    FOR rec IN (SELECT AccountID, Balance FROM SavingsAccounts) LOOP
+        new_balance := rec.Balance + (rec.Balance * 0.01);
+
+        UPDATE SavingsAccounts
+        SET Balance = new_balance
+        WHERE AccountID = rec.AccountID;
+
+        DBMS_OUTPUT.PUT_LINE('Interest applied to AccountID ' || rec.AccountID ||
+                             ', New Balance: ' || TO_CHAR(new_balance, '99999.99'));
+    END LOOP;
+
     COMMIT;
-    DBMS_OUTPUT.PUT_LINE('Monthly interest process completed.');
-    DBMS_OUTPUT.PUT_LINE('Total Savings Accounts updated: ' || v_updated_rows);
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        DBMS_OUTPUT.PUT_LINE('Error processing monthly interest: ' || SQLERRM);
-        RAISE;
 END;
 /
 
--- Test execution code block (commented out by default)
-/*
-SET SERVEROUTPUT ON;
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('--- Before Processing Monthly Interest ---');
-    FOR r IN (SELECT AccountID, CustomerID, Balance FROM Accounts WHERE AccountType = 'Savings') LOOP
-        DBMS_OUTPUT.PUT_LINE('Account: ' || r.AccountID || ' | Balance: $' || r.Balance);
-    END LOOP;
-    
-    -- Execute procedure
     ProcessMonthlyInterest;
-    
-    DBMS_OUTPUT.PUT_LINE('--- After Processing Monthly Interest ---');
-    FOR r IN (SELECT AccountID, CustomerID, Balance FROM Accounts WHERE AccountType = 'Savings') LOOP
-        DBMS_OUTPUT.PUT_LINE('Account: ' || r.AccountID || ' | New Balance: $' || r.Balance);
-    END LOOP;
 END;
 /
-*/
